@@ -2,6 +2,7 @@ package com.example.transacao.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -17,8 +18,10 @@ public class Transacao {
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
 
-    @Column(nullable = false)
-    private String usuarioCriador;
+    @Setter
+    @ManyToOne
+    @JoinColumn(name = "usuario_criador_id", nullable = false)
+    private Usuario usuarioCriador;
 
     @Column(nullable = false)
     private Double valor;
@@ -36,5 +39,10 @@ public class Transacao {
         EM_PROCESSAMENTO,
         APROVADA,
         NEGADA
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.dataCriacao = LocalDateTime.now();
     }
 }
