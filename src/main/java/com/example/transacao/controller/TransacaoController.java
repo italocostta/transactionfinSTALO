@@ -13,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +27,8 @@ public class TransacaoController {
     private TransacaoService transacaoService;
 
     @GetMapping("/transacoes")
-    public List<Transacao> listarTodas() {
-        return transacaoService.listarTodas();
+    public List<Transacao> listarTransacoes() {
+        return transacaoService.listarTransacoesDoUsuario();
     }
 
     @PostMapping("/transacoes")
@@ -41,7 +40,6 @@ public class TransacaoController {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
         transacao.setUsuarioCriador(usuarioCriador);
-
         transacao.setStatus(Transacao.StatusTransacao.EM_PROCESSAMENTO);
 
         try {
@@ -63,12 +61,10 @@ public class TransacaoController {
         return ResponseEntity.ok(transacao.get());
     }
 
-
-
     @DeleteMapping("/transacoes/{id}")
     public ResponseEntity<Void> excluirTransacao(@PathVariable Long id) {
-        Transacao transacao = transacaoService.buscarPorId(id);
-        if (transacao == null) {
+        Optional<Transacao> transacao = Optional.ofNullable(transacaoService.buscarPorId(id));
+        if (transacao.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         transacaoService.excluirTransacao(id);
