@@ -46,6 +46,26 @@ public class LoadDatabase {
                 user.setRole("USER");
                 repository.save(user);
             }
+
+            if (repository.findByEmail("user3@exemplo.com").isEmpty()) {
+                Usuario user = new Usuario();
+                user.setEmail("user3@exemplo.com");
+                user.setSenha(passwordEncoder.encode("123456789"));
+                user.setNome("User3");
+                user.setAtivo(true);
+                user.setRole("USER");
+                repository.save(user);
+            }
+
+            if (repository.findByEmail("user4@exemplo.com").isEmpty()) {
+                Usuario user = new Usuario();
+                user.setEmail("user4@exemplo.com");
+                user.setSenha(passwordEncoder.encode("12345678910"));
+                user.setNome("User4");
+                user.setAtivo(true);
+                user.setRole("USER");
+                repository.save(user);
+            }
         };
     }
 }
