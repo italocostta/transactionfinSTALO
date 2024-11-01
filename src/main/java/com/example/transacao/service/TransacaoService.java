@@ -19,19 +19,21 @@ public class TransacaoService {
     }
 
     public Transacao salvarTransacao(Transacao transacao) {
-        // Salva a transação e retorna o objeto salvo
         return transacaoRepository.save(transacao);
     }
 
-    public Optional<Transacao> buscarPorId(Long id) {
-        return transacaoRepository.findById(id);
+    public Transacao buscarPorId(Long id) {
+        return transacaoRepository.findById(id)
+                .filter(Transacao::getAtivo) // Verifica se a transação está ativa
+                .orElse(null);
     }
 
-
-
     public void excluirTransacao(Long id) {
-        Optional<Transacao> transacao = transacaoRepository.findById(id);
-        transacao.ifPresent(transacaoRepository::delete);
+        Transacao transacao = buscarPorId(id);
+        if (transacao != null) {
+            transacao.setAtivo(false);
+            transacaoRepository.save(transacao);
+        }
     }
 
 }

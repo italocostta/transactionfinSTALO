@@ -55,7 +55,7 @@ public class TransacaoController {
 
     @GetMapping("/transacoes/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        Optional<Transacao> transacao = transacaoService.buscarPorId(id);
+        Optional<Transacao> transacao = Optional.ofNullable(transacaoService.buscarPorId(id));
         if (transacao.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Transação não encontrada");
@@ -67,11 +67,11 @@ public class TransacaoController {
 
     @DeleteMapping("/transacoes/{id}")
     public ResponseEntity<Void> excluirTransacao(@PathVariable Long id) {
-        Optional<Transacao> transacao = transacaoService.buscarPorId(id);
-        if (transacao.isEmpty()) {
+        Transacao transacao = transacaoService.buscarPorId(id);
+        if (transacao == null) {
             return ResponseEntity.notFound().build();
         }
         transacaoService.excluirTransacao(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build(); // Retorna 204 após soft delete
     }
 }

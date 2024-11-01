@@ -45,4 +45,7 @@ public class Transacao {
     public void prePersist() {
         this.dataCriacao = LocalDateTime.now();
     }
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
 }
