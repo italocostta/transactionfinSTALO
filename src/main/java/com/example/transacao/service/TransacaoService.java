@@ -1,74 +1,87 @@
 package com.example.transacao.service;
 
 import com.example.transacao.model.Transacao;
-import com.example.transacao.model.Usuario;
 import com.example.transacao.repository.TransacaoRepository;
-import com.example.transacao.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 @Service
 public class TransacaoService {
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
-
-
-    @Autowired
     private TransacaoRepository transacaoRepository;
 
     public List<Transacao> listarTodas() {
-        return transacaoRepository.findAll();
+        return transacaoRepository.findAllByAtivoTrue();
     }
 
-    public List<Transacao> listarTransacoesDoUsuario() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String emailUsuario = authentication.getName();
+    public Transacao salvarTransacao(Transacao transacao, MultipartFile documento) {
+        // Define a data de criação e status padrão
+        transacao.setDataCriacao(LocalDateTime.now());
+        transacao.setStatus(Transacao.StatusTransacao.EM_PROCESSAMENTO);
 
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-
-        if ("ADMIN".equals(usuario.getRole())) {
-            return transacaoRepository.findAllByAtivoTrue();
-        } else {
-            return transacaoRepository.findByUsuarioCriadorAndAtivoTrue(usuario);
+        // Verifica se um documento foi enviado
+        if (documento != null && !documento.isEmpty()) {
+            String nomeDocumento = salvarDocumento(documento);
+            transacao.setDocumento(nomeDocumento);
         }
-    }
 
-    public Transacao salvarTransacao(Transacao transacao) {
         return transacaoRepository.save(transacao);
     }
 
     public Transacao buscarPorId(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String emailUsuario = authentication.getName();
-
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-
-        Transacao transacao = transacaoRepository.findById(id)
+        return transacaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
-
-        if ("ADMIN".equals(usuario.getRole()) || transacao.getUsuarioCriador().equals(usuario)) {
-            return transacao;
-        } else {
-            throw new RuntimeException("Acesso negado");
-        }
     }
 
+    public Transacao atualizarTransacao(Long id, Transacao transacaoAtualizada, MultipartFile documento) {
+        Transacao transacaoExistente = buscarPorId(id);
+
+        // Atualiza os dados da transação
+        transacaoExistente.setValor(transacaoAtualizada.getValor());
+        transacaoExistente.setStatus(transacaoAtualizada.getStatus());
+        transacaoExistente.setDataAtualizacao(LocalDateTime.now());
+
+        // Atualiza o documento se houver um novo
+        if (documento != null && !documento.isEmpty()) {
+            String nomeDocumento = salvarDocumento(documento);
+            transacaoExistente.setDocumento(nomeDocumento);
+        }
+
+        return transacaoRepository.save(transacaoExistente);
+    }
 
     public void excluirTransacao(Long id) {
         Transacao transacao = buscarPorId(id);
-        if (transacao != null) {
-            transacao.setAtivo(false);
-            transacaoRepository.save(transacao);
-        }
+        transacao.setAtivo(false);
+        transacaoRepository.save(transacao);
     }
 
+    private String salvarDocumento(MultipartFile documento) {
+        try {
+            String diretorioUploads = "uploads/";
+            Path caminhoDiretorioUploads = Paths.get(diretorioUploads);
+
+            if (!Files.exists(caminhoDiretorioUploads)) {
+                Files.createDirectories(caminhoDiretorioUploads);
+            }
+
+            Path caminhoDocumento = caminhoDiretorioUploads.resolve(Objects.requireNonNull(documento.getOriginalFilename()));
+            Files.copy(documento.getInputStream(), caminhoDocumento, StandardCopyOption.REPLACE_EXISTING);
+
+            return caminhoDocumento.getFileName().toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao salvar documento", e);
+        }
+    }
 }

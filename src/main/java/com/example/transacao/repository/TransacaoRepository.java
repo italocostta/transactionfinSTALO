@@ -13,6 +13,4 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Long> {
     @Query("SELECT t FROM Transacao t WHERE t.ativo = true")
     List<Transacao> findAllByAtivoTrue();
 
-    @Query("SELECT t FROM Transacao t WHERE t.usuarioCriador = :usuario AND t.ativo = true")
-    List<Transacao> findByUsuarioCriadorAndAtivoTrue(@Param("usuario") Usuario usuario);
 }

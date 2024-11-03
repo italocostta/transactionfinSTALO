@@ -2,7 +2,6 @@ package com.example.transacao.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -18,15 +17,13 @@ public class Transacao {
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
 
-    @Setter
-    @ManyToOne
-    @JoinColumn(name = "usuario_criador_id", nullable = false)
-    private Usuario usuarioCriador;
+    @Column
+    private LocalDateTime dataAtualizacao;
 
     @Column(nullable = false)
     private Double valor;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String cpf;
 
     private String documento;
@@ -34,6 +31,10 @@ public class Transacao {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusTransacao status;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
 
     public enum StatusTransacao {
         EM_PROCESSAMENTO,
@@ -44,8 +45,11 @@ public class Transacao {
     @PrePersist
     public void prePersist() {
         this.dataCriacao = LocalDateTime.now();
+        this.dataAtualizacao = LocalDateTime.now();
     }
 
-    @Column(nullable = false)
-    private Boolean ativo = true;
+    @PreUpdate
+    public void preUpdate() {
+        this.dataAtualizacao = LocalDateTime.now();
+    }
 }
